@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mystudy.boardSystem.mapper.BoardMapper">
+
+<!-- 
+	<select id="findAll" parameterType="com.mystudy.boardSystem.paging.SearchDTO" resultType="com.mystudy.boardSystem.vo.BoardVO">
+        SELECT board_id
+        		, title
+        		, create_user
+        		, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date
+        		, is_deleted
+        		, is_blind
+        		, modify_user
+        		, modify_date
+        FROM board
+        WHERE is_deleted = false
+        ORDER BY board_id DESC
+        LIMIT #{recordSize} OFFSET #{pagination.limitStart}
+    </select>
+    
+    <select id="count" parameterType="com.mystudy.boardSystem.paging.SearchDTO" resultType="int">
+        SELECT COUNT(board_id)
+        FROM board
+        WHERE is_deleted = false
+    </select>
+-->
+     
+    <select id="findAll" parameterType="com.mystudy.boardSystem.paging.SearchDTO" resultType="Map">
+        select a.* 
+
+		from (
+		
+			select
+				board_id
+				, title
+				, create_user
+				, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date
+				, is_deleted
+				, is_blind
+				, modify_user
+				, modify_date
+				, sum(1) over() as total_record_count
+				, row_number() over( order by board_id desc)  as seq
+			from board b 
+			WHERE is_deleted = false
+		) a
+		where 1=1
+		and ceil(seq/(#{recordSize}*1.0)) = #{page}
+    </select>
+   
+   
+	<select id="getBoard" resultType="com.mystudy.boardSystem.vo.BoardVO">
+        SELECT board_id
+		        , title
+		        , create_user
+		        , TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date
+		        , is_deleted
+		        , is_blind
+		        , modify_user
+		        , modify_date
+        FROM board
+        WHERE is_deleted = false
+        ORDER BY board_id DESC
+    </select>
+    
+    <select id="getPost" parameterType="int" resultType="com.mystudy.boardSystem.vo.BoardVO">
+    	SELECT board_id
+		    	, title
+		    	, content
+		    	, create_user
+		    	, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date
+		    	, is_deleted
+		    	, is_blind
+		    	, modify_user
+		    	, modify_date
+    	FROM board
+    	WHERE board_id = #{boardId}
+    </select>
+    
+    <insert id="createPost" parameterType="com.mystudy.boardSystem.vo.BoardVO" >
+    	INSERT INTO board (
+    						title
+					    	, content
+					    	, create_user
+					    	)
+					    	
+    	VALUES (
+	    			#{title}
+			    	, #{content}
+			    	, #{createUser}
+		    	)
+    </insert>
+    
+    <update id="updatePost" parameterType="com.mystudy.boardSystem.vo.BoardVO">
+    	UPDATE board 
+    	SET title = #{title}
+    		, content = #{content}
+    		, modify_user = #{modifyUser}
+    		, modify_date = CURRENT_TIMESTAMP
+    	WHERE board_id = #{boardId}	
+    </update>
+    
+    <update id="deletePost" parameterType="int">
+    	UPDATE board
+    	SET is_deleted = true
+    	WHERE board_id = #{boardId}
+    </update>
+    
+    <update id="filterBoard" parameterType="com.mystudy.boardSystem.vo.BoardVO">
+    	UPDATE board 
+		SET is_blind = true
+		WHERE board_id = #{boardId}
+    </update>
+    
+    <select id="getBlindPost" parameterType="com.mystudy.boardSystem.vo.CommonCodeVO" resultType="com.mystudy.boardSystem.vo.BoardVO">
+    	SELECT * 
+    	FROM board
+		WHERE is_deleted = false 
+		AND is_blind = false 
+		AND (content like concat('%',#{commonCodeName},'%')  or title like concat('%',#{commonCodeName},'%'))
+    </select>
+    
+    
+</mapper>

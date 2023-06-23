@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mystudy.boardSystem.mapper.MemberMapper">
+	<select id="getMember" parameterType="com.mystudy.boardSystem.vo.MemberVO" resultType="com.mystudy.boardSystem.vo.MemberVO">
+        SELECT id, password, email, zipcode, admin, create_user, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date, 
+        	modify_user, modify_date, 
+        	convert_from(decrypt(decode(name,'hex'),'daon','aes'),'utf8') as name,
+        	convert_from(decrypt(decode(phone,'hex'),'daon','aes'),'utf8') as phone, 
+        	convert_from(decrypt(decode(address_detail,'hex'),'daon','aes'),'utf8') as addressDetail,
+        	address
+        FROM member
+        WHERE id = #{id} 
+        and password = CRYPT(#{password}, password)
+	</select>
+	
+	<insert id="register" parameterType="com.mystudy.boardSystem.vo.MemberVO" >
+		INSERT INTO member (id, password, name, phone, address_detail, address, email, zipcode, create_user)
+		VALUES (#{id},CRYPT(#{password}, GEN_SALT('md5')), 
+			encode(encrypt(convert_to(#{name},'utf8'),'daon','aes'),'hex'),
+			encode(encrypt(convert_to(#{phone},'utf8'),'daon','aes'),'hex'),
+			encode(encrypt(convert_to(#{addressDetail},'utf8'),'daon','aes'),'hex'),
+			#{address}, #{email}, #{zipcode}, #{id})
+	</insert>
+	
+	<select id="getMemberList" resultType="com.mystudy.boardSystem.vo.MemberVO">
+        SELECT id, password, email, zipcode, admin, create_user, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date, 
+        	modify_user, modify_date, 
+        	convert_from(decrypt(decode(name,'hex'),'daon','aes'),'utf8') as name,
+        	convert_from(decrypt(decode(phone,'hex'),'daon','aes'),'utf8') as phone, 
+        	convert_from(decrypt(decode(address_detail,'hex'),'daon','aes'),'utf8') as addressDetail,
+        	address
+        FROM member
+        ORDER BY create_date 
+	</select>
+	
+	<select id="findAll" parameterType="com.mystudy.boardSystem.paging.SearchDTO" resultType="com.mystudy.boardSystem.vo.MemberVO">
+		SELECT id, password, email, zipcode, admin, create_user, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date, 
+        	modify_user, modify_date, 
+        	convert_from(decrypt(decode(name,'hex'),'daon','aes'),'utf8') as name,
+        	convert_from(decrypt(decode(phone,'hex'),'daon','aes'),'utf8') as phone, 
+        	convert_from(decrypt(decode(address_detail,'hex'),'daon','aes'),'utf8') as addressDetail,
+        	address
+        FROM member
+        ORDER BY create_date
+        LIMIT #{recordSize} OFFSET #{pagination.limitStart}; 
+	
+    </select>
+	
+	<select id="count" parameterType="com.mystudy.boardSystem.paging.SearchDTO" resultType="int">
+        SELECT COUNT(id)
+        FROM member
+    </select>
+	
+	<update id="changeAdmin" parameterType="com.mystudy.boardSystem.vo.MemberVO">
+		UPDATE "member" 
+		SET admin = #{admin}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="getMemberInfo" parameterType="String" resultType="com.mystudy.boardSystem.vo.MemberVO">
+        SELECT id, password, email, zipcode, admin, create_user, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date, 
+        	modify_user, modify_date, 
+        	convert_from(decrypt(decode(name,'hex'),'daon','aes'),'utf8') as name,
+        	convert_from(decrypt(decode(phone,'hex'),'daon','aes'),'utf8') as phone, 
+        	convert_from(decrypt(decode(address_detail,'hex'),'daon','aes'),'utf8') as addressDetail,
+        	address
+        FROM member
+        WHERE id = #{id} 
+	</select>
+</mapper>
