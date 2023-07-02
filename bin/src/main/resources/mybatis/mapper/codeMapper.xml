@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mystudy.boardSystem.mapper.CodeMapper">
+	
+<!-- 그룹코드 -->
+	<select id="getGroupCodeList" resultType="com.mystudy.boardSystem.vo.GroupCodeVO">
+		SELECT group_code, code_name, create_user, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date
+		FROM groupcode
+		WHERE is_deleted = false
+		ORDER BY group_code		
+	</select>
+	
+	<select id="getOneGroup" parameterType="com.mystudy.boardSystem.vo.GroupCodeVO" resultType="com.mystudy.boardSystem.vo.GroupCodeVO">
+		SELECT group_code, code_name
+		FROM groupcode
+		WHERE group_code = #{groupCode}
+	</select>
+	
+	<update id="modifyGroup" parameterType="com.mystudy.boardSystem.vo.GroupCodeVO" >
+		UPDATE groupcode 
+		SET code_name = #{codeName},
+			modify_user = #{modifyUser},
+			modify_date = CURRENT_TIMESTAMP
+		WHERE group_code = #{groupCode}
+	</update>
+	
+	<update id="deleteGroup" parameterType="com.mystudy.boardSystem.vo.GroupCodeVO" >
+		UPDATE groupcode 
+		SET is_deleted = true
+		WHERE group_code = #{groupCode}
+	</update>
+	
+	<insert id="insertGroup" parameterType="com.mystudy.boardSystem.vo.GroupCodeVO">
+		INSERT INTO groupcode (code_name, create_user)
+		VALUES(#{codeName},#{createUser})
+	</insert>
+	
+<!-- 공통코드 -->	
+	<select id="getCommonCodeList" parameterType="com.mystudy.boardSystem.vo.GroupCodeVO" resultType="com.mystudy.boardSystem.vo.CommonCodeVO">
+		SELECT common_code, group_code, common_code_name, create_user, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date
+		FROM commoncode
+		WHERE group_code = #{groupCode}
+		ORDER BY common_code		
+	</select>
+	
+	<select id="getOneCommon" parameterType="com.mystudy.boardSystem.vo.CommonCodeVO" resultType="com.mystudy.boardSystem.vo.CommonCodeVO">
+		SELECT g.code_name , c.group_code, c.common_code, c.common_code_name
+		FROM groupcode g , commoncode c
+		WHERE g.group_code = c.group_code
+		AND common_code = #{commonCode}
+	</select>
+	
+	<update id="modifyCommon" parameterType="com.mystudy.boardSystem.vo.CommonCodeVO" >
+		UPDATE commoncode 
+		SET common_code_name = #{commonCodeName},
+			modify_user = #{modifyUser},
+			modify_date = CURRENT_TIMESTAMP
+		WHERE common_code = #{commonCode}
+	</update>
+	
+	<delete id="deleteCommon" parameterType="com.mystudy.boardSystem.vo.CommonCodeVO" >
+		DELETE FROM commoncode
+		WHERE common_code = #{commonCode}
+	</delete>
+	
+	<insert id="insertCommon" parameterType="com.mystudy.boardSystem.vo.CommonCodeVO">
+		INSERT INTO commoncode (group_code, common_code_name ,create_user)
+		VALUES(#{groupCode},#{commonCodeName},#{createUser})
+	</insert>
+	
+	<select id="getBadWord" resultType="com.mystudy.boardSystem.vo.CommonCodeVO">
+		SELECT c.common_code_name 
+		FROM groupcode g, commoncode c   
+		WHERE g.group_code = c.group_code
+		AND g.code_name = '비속어' 
+	</select>
+	
+	
+	
+</mapper>

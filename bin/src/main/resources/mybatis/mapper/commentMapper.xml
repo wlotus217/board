@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mystudy.boardSystem.mapper.CommentMapper">
+
+	<select id="getCommentList" parameterType="int" resultType="com.mystudy.boardSystem.vo.CommentVO">
+		SELECT comment_id
+				, board_id
+				, case when is_deleted = false then content else '삭제된 댓글입니다.' end as content
+				, create_user
+				, TO_CHAR(create_date,'YYYY-MM-DD HH24:MI:SS') AS create_date
+				, parent_comment_id, group_num, is_deleted
+		FROM comment
+		WHERE board_id = #{boardId}
+		ORDER BY parent_comment_id
+				, group_num
+	</select>
+	
+	<select id="getAllCommentCnt" resultType="int">
+		SELECT COUNT(comment_id) FROM "comment" c
+		WHERE board_id = #{boardId}
+		AND	is_deleted = false
+		
+	</select>
+
+	<insert id="createComment" parameterType="com.mystudy.boardSystem.vo.CommentVO">
+		INSERT INTO comment (board_id
+								, content
+								, create_user
+								, parent_comment_id)
+			VALUES (#{boardId}
+					, #{content}
+					, #{createUser}
+					, COALESCE((SELECT MAX(comment_id) FROM comment),0) +1)
+	</insert>
+	
+	
+		<!--  <if test="parentCommentId == 0"> 
+			INSERT INTO comment (board_id
+								, content
+								, create_user
+								, parent_comment_id)
+			VALUES (#{boardId}
+					, #{content}
+					, #{createUser}
+					, COALESCE((SELECT MAX(comment_id) FROM comment),0)+1 )
+		</if>
+		
+		<if test="parentCommentId != 0">
+			
+			INSERT INTO comment (board_id
+								, content
+								, create_user
+								, parent_comment_id
+								, group_num)
+			VALUES (#{boardId}
+					, #{content}
+					, #{createUser}
+					, #{parentCommentId}
+					, (SELECT MAX(group_num) FROM comment 
+						WHERE parent_comment_id = #{parentCommentId})+1 ) 
+		</if> -->
+	
+	
+	<insert id="createChildComment" parameterType="com.mystudy.boardSystem.vo.CommentVO">
+		<selectKey keyProperty="groupNum" resultType="int" order="BEFORE">
+			SELECT MAX(group_num)+1 FROM comment 
+			WHERE parent_comment_id = #{parentCommentId}
+		</selectKey>
+		
+		INSERT INTO comment (board_id
+								, content
+								, create_user
+								, parent_comment_id
+								, group_num)
+			VALUES (#{boardId}
+					, #{content}
+					, #{createUser}
+					, #{parentCommentId}
+					, #{groupNum} ) 
+	</insert>
+	
+	<update id="updateComment" parameterType="com.mystudy.boardSystem.vo.CommentVO">
+		UPDATE comment
+		SET content = #{content},
+			modify_user = #{modifyUser},
+    		modify_date = CURRENT_TIMESTAMP
+		WHERE comment_id = #{commentId}
+	</update>
+	
+	<update id="deleteComment" parameterType="com.mystudy.boardSystem.vo.CommentVO">
+		UPDATE comment
+		SET is_deleted = true
+		WHERE comment_id = #{commentId}
+	</update>
+	
+	
+	<select id="getChildComment" parameterType="com.mystudy.boardSystem.vo.CommentVO" resultType="com.mystudy.boardSystem.vo.CommentVO">
+		SELECT * FROM "comment" c 
+		WHERE parent_comment_id = (SELECT parent_comment_id FROM "comment" c 
+							WHERE comment_id = #{commentId})
+		AND group_num != 0
+		AND is_deleted = false
+		ORDER BY group_num	
+	</select>
+	
+</mapper>
